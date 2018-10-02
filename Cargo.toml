@@ -20,7 +20,7 @@ futures = "0.1"
 trackable = "0.2"
 
 [target.'cfg(unix)'.dependencies]
-liberasurecode = "1.0.0"
+liberasurecode = "1.0.1"
 
 [dev-dependencies]
 clap = "2"
