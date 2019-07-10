@@ -104,6 +104,7 @@ impl LibErasureCoder {
     /// Makes a new `LibErasureCoder` instance with the default settings.
     ///
     /// This is equivalent to `LibErasureCoderBuilder::new(data_fragments, parity_fragments).build_coder()`.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(data_fragments: NonZeroUsize, parity_fragments: NonZeroUsize) -> Result<Self> {
         track!(LibErasureCoderBuilder::new(data_fragments, parity_fragments).build_coder())
     }

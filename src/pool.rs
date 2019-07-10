@@ -7,7 +7,7 @@ use trackable::error::ErrorKindExt;
 use {BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
 
 thread_local! {
-    static ERASURE_CODERS: RefCell<HashMap<String, Box<ErasureCode>>> =
+    static ERASURE_CODERS: RefCell<HashMap<String, Box<dyn ErasureCode>>> =
         RefCell::new(HashMap::new());
 }
 
@@ -81,7 +81,7 @@ impl<B: BuildCoder> ErasureCoderPool<B> {
 
     fn with_coder<F, T>(builder: &B, f: F) -> Result<T>
     where
-        for<'a> F: FnOnce(&'a mut ErasureCode) -> Result<T>,
+        for<'a> F: FnOnce(&'a mut dyn ErasureCode) -> Result<T>,
     {
         ERASURE_CODERS.with(|coders| {
             let coder_id = builder.coder_id();
