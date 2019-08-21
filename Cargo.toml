@@ -1,6 +1,6 @@
 [package]
 name = "ecpool"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["The FrugalOS Developers"]
 description = "Thread pool for managing executions of erasure coding"
 homepage = "https://github.com/frugalos/ecpool"
@@ -20,7 +20,7 @@ futures = "0.1"
 trackable = "0.2"
 
 [target.'cfg(unix)'.dependencies]
-liberasurecode = "1.0.1"
+liberasurecode = "1.0.3"
 
 [dev-dependencies]
 clap = "2"
