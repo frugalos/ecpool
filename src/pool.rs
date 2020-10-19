@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use trackable::error::ErrorKindExt;
 
-use {BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
+use crate::{BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
 
 thread_local! {
     static ERASURE_CODERS: RefCell<HashMap<String, Box<dyn ErasureCode>>> =
@@ -112,14 +112,13 @@ impl<T> Future for LazyResult<T> {
 
 #[cfg(test)]
 mod tests {
-    use fibers_global;
     use std::num::NonZeroUsize;
     use std::result::Result;
     use trackable::error::{Failed, MainError};
 
     use super::*;
-    use replica::ReplicaCoder;
-    use ErrorKind;
+    use crate::replica::ReplicaCoder;
+    use crate::ErrorKind;
 
     #[test]
     fn pool_works() -> Result<(), MainError> {

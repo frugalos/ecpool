@@ -92,8 +92,8 @@ extern crate liberasurecode as libec;
 
 use std::num::NonZeroUsize;
 
-pub use error::{Error, ErrorKind};
-pub use pool::ErasureCoderPool;
+pub use crate::error::{Error, ErrorKind};
+pub use crate::pool::ErasureCoderPool;
 
 #[cfg(unix)]
 pub mod liberasurecode;

@@ -2,13 +2,13 @@
 //!
 //! [`ErasureCode`]: ../trait.ErasureCode.html
 //! [openstack/liberasurecode]: https://github.com/openstack/liberasurecode
-use libec;
+use crate::libec;
 use std::num::NonZeroUsize;
 use trackable::error::ErrorKindExt;
 
-use {BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
+use crate::{BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
 
-pub use libec::{Backend, Checksum};
+pub use crate::libec::{Backend, Checksum};
 
 /// [`LibErasureCoder`] builder.
 ///
@@ -156,7 +156,7 @@ impl From<libec::ErasureCoder> for LibErasureCoder {
 
 impl From<libec::Error> for Error {
     fn from(f: libec::Error) -> Self {
-        use libec::Error::*;
+        use crate::libec::Error::*;
         match f {
             InsufficientFragments => ErrorKind::InvalidInput.cause(f).into(),
             BadChecksum | BadHeader => ErrorKind::CorruptedFragments.cause(f).into(),
@@ -170,7 +170,7 @@ mod tests {
     use std::num::NonZeroUsize;
 
     use super::*;
-    use {ErasureCode, ErrorKind};
+    use crate::{ErasureCode, ErrorKind};
 
     #[test]
     fn it_works() {
