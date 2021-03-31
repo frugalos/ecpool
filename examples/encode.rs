@@ -25,18 +25,21 @@ fn main() -> Result<(), trackable::error::MainError> {
                 .short("k")
                 .takes_value(true)
                 .default_value("6"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("PARITY_FRAGMENTS")
                 .short("m")
                 .takes_value(true)
                 .default_value("3"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("CHECKSUM")
                 .short("c")
                 .takes_value(true)
                 .possible_values(&["none", "crc32", "md5"])
                 .default_value("none"),
-        ).get_matches();
+        )
+        .get_matches();
     let input_file = matches.value_of("INPUT_FILE").unwrap();
     let mut input_data = Vec::new();
     let mut file = track_any_err!(fs::File::open(input_file))?;
@@ -54,11 +57,9 @@ fn main() -> Result<(), trackable::error::MainError> {
 
     let k = track_assert_some!(NonZeroUsize::new(k), Failed);
     let m = track_assert_some!(NonZeroUsize::new(m), Failed);
-    let mut ec = track!(
-        ecpool::liberasurecode::LibErasureCoderBuilder::new(k, m)
-            .checksum(checksum)
-            .build_coder()
-    )?;
+    let mut ec = track!(ecpool::liberasurecode::LibErasureCoderBuilder::new(k, m)
+        .checksum(checksum)
+        .build_coder())?;
 
     let start_time = Instant::now();
     let fragments = track!(ec.encode(&input_data[..]))?;

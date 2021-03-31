@@ -1,10 +1,12 @@
-use fibers_tasque::{AsyncCall, DefaultCpuTaskQueue, TaskQueueExt};
-use futures::{Async, Future, Poll};
+use futures::task::{Context, Poll};
+use futures::Future;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::pin::Pin;
+use tokio_tasque::{AsyncCall, DefaultCpuTaskQueue, TaskQueueExt};
 use trackable::error::ErrorKindExt;
 
-use {BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
+use {BuildCoder, ErasureCode, ErrorKind, Fragment, FragmentBuf, Result};
 
 thread_local! {
     static ERASURE_CODERS: RefCell<HashMap<String, Box<ErasureCode>>> =
@@ -13,10 +15,10 @@ thread_local! {
 
 /// Thread pool for encoding and decoding data by using an [`ErasureCode`] implementation.
 ///
-/// Internally, this uses [`fibers_tasque::DefaultCpuTaskQueue`] for realizing thread pool functionality.
+/// Internally, this uses [`tokio_tasque::DefaultCpuTaskQueue`] for realizing thread pool functionality.
 ///
 /// [`ErasureCode`]: ./trait.ErasureCode.html
-/// [`fibers_tasque::DefaultCpuTaskQueue`]: https://docs.rs/fibers_tasque/0.1/fibers_tasque/struct.DefaultCpuTaskQueue.html
+/// [`tokio_tasque::DefaultCpuTaskQueue`]: https://docs.rs/tokio_tasque/0.1/tokio_tasque/struct.DefaultCpuTaskQueue.html
 #[derive(Debug, Clone)]
 pub struct ErasureCoderPool<B> {
     builder: B,
@@ -33,7 +35,7 @@ impl<B: BuildCoder> ErasureCoderPool<B> {
     ///
     /// The result vector contains `N` data fragments and `M` parity fragments
     /// (where `N = self.data_fragments()` and `M = self.parity_fragments()`).
-    pub fn encode<T>(&self, data: T) -> impl Future<Item = Vec<FragmentBuf>, Error = Error>
+    pub fn encode<T>(&self, data: T) -> impl Future<Output = Result<Vec<FragmentBuf>>>
     where
         T: AsRef<[u8]> + Send + 'static,
     {
@@ -48,7 +50,7 @@ impl<B: BuildCoder> ErasureCoderPool<B> {
     /// The decoding process will be executed on a thread in the pool.
     ///
     /// Note whether the correctness of the result data has been validated depends on the implementations.
-    pub fn decode<T>(&self, fragments: Vec<T>) -> impl Future<Item = Vec<u8>, Error = Error>
+    pub fn decode<T>(&self, fragments: Vec<T>) -> impl Future<Output = Result<Vec<u8>>>
     where
         T: AsRef<Fragment> + Send + 'static,
     {
@@ -67,7 +69,7 @@ impl<B: BuildCoder> ErasureCoderPool<B> {
         &self,
         index: usize,
         fragments: Vec<T>,
-    ) -> impl Future<Item = Vec<u8>, Error = Error>
+    ) -> impl Future<Output = Result<Vec<u8>>>
     where
         T: AsRef<Fragment> + Send + 'static,
     {
@@ -97,22 +99,18 @@ impl<B: BuildCoder> ErasureCoderPool<B> {
 
 struct LazyResult<T>(AsyncCall<Result<T>>);
 impl<T> Future for LazyResult<T> {
-    type Item = T;
-    type Error = Error;
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        if let Async::Ready(result) = track!(self.0.poll().map_err(|e| ErrorKind::Other.cause(e)))?
-        {
-            let value = result?;
-            Ok(Async::Ready(value))
-        } else {
-            Ok(Async::NotReady)
-        }
+    type Output = Result<T>;
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        Pin::new(&mut self.0).poll(cx).map(|result| match result {
+            Ok(result) => track!(result),
+            Err(e) => track!(Err(ErrorKind::Other.cause(e).into())),
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use fibers_global;
+    use futures::executor::block_on;
     use std::num::NonZeroUsize;
     use std::result::Result;
     use trackable::error::{Failed, MainError};
@@ -128,29 +126,23 @@ mod tests {
 
         let coder = ErasureCoderPool::new(ReplicaCoder::new(data_fragments, parity_fragments));
         let data = vec![0, 1, 2, 3];
-        let encoded = track!(fibers_global::execute(coder.encode(data.clone())))?;
+        let encoded = track!(block_on(coder.encode(data.clone())))?;
 
         assert_eq!(
             Some(&data),
-            fibers_global::execute(coder.decode(encoded[0..].to_vec()))
-                .as_ref()
-                .ok()
+            block_on(coder.decode(encoded[0..].to_vec())).as_ref().ok()
         );
         assert_eq!(
             Some(&data),
-            fibers_global::execute(coder.decode(encoded[1..].to_vec()))
-                .as_ref()
-                .ok()
+            block_on(coder.decode(encoded[1..].to_vec())).as_ref().ok()
         );
         assert_eq!(
             Some(&data),
-            fibers_global::execute(coder.decode(encoded[2..].to_vec()))
-                .as_ref()
-                .ok()
+            block_on(coder.decode(encoded[2..].to_vec())).as_ref().ok()
         );
         assert_eq!(
             Err(ErrorKind::InvalidInput),
-            fibers_global::execute(coder.decode(encoded[3..].to_vec())).map_err(|e| *e.kind())
+            block_on(coder.decode(encoded[3..].to_vec())).map_err(|e| *e.kind())
         );
 
         Ok(())

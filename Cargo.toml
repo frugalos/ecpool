@@ -14,9 +14,9 @@ license = "MIT"
 travis-ci = {repository = "frugalos/ecpool"}
 
 [dependencies]
-fibers = "0.1"
-fibers_tasque = "0.1"
-futures = "0.1"
+futures = "0.3"
+tokio = { version = "1.0", features = ["sync"]}
+tokio_tasque = { version = "0.1", path = "../tokio_tasque" }
 trackable = "0.2"
 
 [target.'cfg(unix)'.dependencies]
@@ -24,4 +24,4 @@ liberasurecode = "1.0.1"
 
 [dev-dependencies]
 clap = "2"
-fibers_global = "0.1"
+futures = { version = "0.3", features = ["executor"]}
