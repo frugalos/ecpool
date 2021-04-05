@@ -3,7 +3,7 @@
 //! [`ErasureCode`]: ../trait.ErasureCode.html
 use std::num::NonZeroUsize;
 
-use {BuildCoder, ErasureCode, ErrorKind, Fragment, FragmentBuf, Result};
+use crate::{BuildCoder, ErasureCode, ErrorKind, Fragment, FragmentBuf, Result};
 
 /// An [`ErasureCode`] implementation that simply replicates the input data.
 ///

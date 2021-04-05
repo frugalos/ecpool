@@ -6,7 +6,7 @@ use libec;
 use std::num::NonZeroUsize;
 use trackable::error::ErrorKindExt;
 
-use {BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
+use crate::{BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
 
 pub use libec::{Backend, Checksum};
 
