@@ -110,7 +110,6 @@ impl<T> Future for LazyResult<T> {
 
 #[cfg(test)]
 mod tests {
-    use futures::executor::block_on;
     use std::num::NonZeroUsize;
     use std::result::Result;
     use trackable::error::{Failed, MainError};
@@ -119,30 +118,30 @@ mod tests {
     use replica::ReplicaCoder;
     use ErrorKind;
 
-    #[test]
-    fn pool_works() -> Result<(), MainError> {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn pool_works() -> Result<(), MainError> {
         let data_fragments = track_assert_some!(NonZeroUsize::new(4), Failed);
         let parity_fragments = track_assert_some!(NonZeroUsize::new(2), Failed);
 
         let coder = ErasureCoderPool::new(ReplicaCoder::new(data_fragments, parity_fragments));
         let data = vec![0, 1, 2, 3];
-        let encoded = track!(block_on(coder.encode(data.clone())))?;
+        let encoded = track!(coder.encode(data.clone()).await)?;
 
         assert_eq!(
             Some(&data),
-            block_on(coder.decode(encoded[0..].to_vec())).as_ref().ok()
+            coder.decode(encoded[0..].to_vec()).await.as_ref().ok()
         );
         assert_eq!(
             Some(&data),
-            block_on(coder.decode(encoded[1..].to_vec())).as_ref().ok()
+            coder.decode(encoded[1..].to_vec()).await.as_ref().ok()
         );
         assert_eq!(
             Some(&data),
-            block_on(coder.decode(encoded[2..].to_vec())).as_ref().ok()
+            coder.decode(encoded[2..].to_vec()).await.as_ref().ok()
         );
         assert_eq!(
             Err(ErrorKind::InvalidInput),
-            block_on(coder.decode(encoded[3..].to_vec())).map_err(|e| *e.kind())
+            coder.decode(encoded[3..].to_vec()).await.map_err(|e| *e.kind())
         );
 
         Ok(())
