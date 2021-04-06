@@ -104,7 +104,7 @@ mod tests {
     use std::num::NonZeroUsize;
 
     use super::*;
-    use {ErasureCode, ErrorKind};
+    use crate::{ErasureCode, ErrorKind};
 
     #[test]
     fn it_works() {

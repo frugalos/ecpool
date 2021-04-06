@@ -2,12 +2,13 @@
 //!
 //! [`ErasureCode`]: ../trait.ErasureCode.html
 //! [openstack/liberasurecode]: https://github.com/openstack/liberasurecode
+use crate::libec;
 use std::num::NonZeroUsize;
 use trackable::error::ErrorKindExt;
 
 use crate::{BuildCoder, ErasureCode, Error, ErrorKind, Fragment, FragmentBuf, Result};
 
-pub use libec::{Backend, Checksum};
+pub use crate::libec::{Backend, Checksum};
 
 /// [`LibErasureCoder`] builder.
 ///
@@ -103,6 +104,7 @@ impl LibErasureCoder {
     /// Makes a new `LibErasureCoder` instance with the default settings.
     ///
     /// This is equivalent to `LibErasureCoderBuilder::new(data_fragments, parity_fragments).build_coder()`.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(data_fragments: NonZeroUsize, parity_fragments: NonZeroUsize) -> Result<Self> {
         track!(LibErasureCoderBuilder::new(data_fragments, parity_fragments).build_coder())
     }
@@ -154,7 +156,7 @@ impl From<libec::ErasureCoder> for LibErasureCoder {
 
 impl From<libec::Error> for Error {
     fn from(f: libec::Error) -> Self {
-        use libec::Error::*;
+        use crate::libec::Error::*;
         match f {
             InsufficientFragments => ErrorKind::InvalidInput.cause(f).into(),
             BadChecksum | BadHeader => ErrorKind::CorruptedFragments.cause(f).into(),
@@ -168,7 +170,7 @@ mod tests {
     use std::num::NonZeroUsize;
 
     use super::*;
-    use {ErasureCode, ErrorKind};
+    use crate::{ErasureCode, ErrorKind};
 
     #[test]
     fn it_works() {
