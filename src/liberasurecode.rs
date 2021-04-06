@@ -2,7 +2,6 @@
 //!
 //! [`ErasureCode`]: ../trait.ErasureCode.html
 //! [openstack/liberasurecode]: https://github.com/openstack/liberasurecode
-use libec;
 use std::num::NonZeroUsize;
 use trackable::error::ErrorKindExt;
 

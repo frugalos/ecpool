@@ -112,7 +112,6 @@ impl<T> Future for LazyResult<T> {
 
 #[cfg(test)]
 mod tests {
-    use fibers_global;
     use std::num::NonZeroUsize;
     use std::result::Result;
     use trackable::error::{Failed, MainError};
