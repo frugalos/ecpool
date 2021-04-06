@@ -6,10 +6,10 @@ use std::pin::Pin;
 use tokio_tasque::{AsyncCall, DefaultCpuTaskQueue, TaskQueueExt};
 use trackable::error::ErrorKindExt;
 
-use {BuildCoder, ErasureCode, ErrorKind, Fragment, FragmentBuf, Result};
+use crate::{BuildCoder, ErasureCode, ErrorKind, Fragment, FragmentBuf, Result};
 
 thread_local! {
-    static ERASURE_CODERS: RefCell<HashMap<String, Box<ErasureCode>>> =
+    static ERASURE_CODERS: RefCell<HashMap<String, Box<dyn ErasureCode>>> =
         RefCell::new(HashMap::new());
 }
 
@@ -83,7 +83,7 @@ impl<B: BuildCoder> ErasureCoderPool<B> {
 
     fn with_coder<F, T>(builder: &B, f: F) -> Result<T>
     where
-        for<'a> F: FnOnce(&'a mut ErasureCode) -> Result<T>,
+        for<'a> F: FnOnce(&'a mut dyn ErasureCode) -> Result<T>,
     {
         ERASURE_CODERS.with(|coders| {
             let coder_id = builder.coder_id();
@@ -115,8 +115,8 @@ mod tests {
     use trackable::error::{Failed, MainError};
 
     use super::*;
-    use replica::ReplicaCoder;
-    use ErrorKind;
+    use crate::replica::ReplicaCoder;
+    use crate::ErrorKind;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn pool_works() -> Result<(), MainError> {
