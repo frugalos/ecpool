@@ -27,23 +27,27 @@ fn main() -> Result<(), trackable::error::MainError> {
                 .takes_value(true)
                 .required(true)
                 .multiple(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("DATA_FRAGMENTS")
                 .short("k")
                 .takes_value(true)
                 .default_value("6"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("PARITY_FRAGMENTS")
                 .short("m")
                 .takes_value(true)
                 .default_value("3"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("CHECKSUM")
                 .short("c")
                 .takes_value(true)
                 .possible_values(&["none", "crc32", "md5"])
                 .default_value("none"),
-        ).get_matches();
+        )
+        .get_matches();
     let mut inputs = Vec::new();
     for file in matches.values_of("INPUT_FILES").unwrap() {
         println!("# INPUT FILE: {}", file);
@@ -64,11 +68,9 @@ fn main() -> Result<(), trackable::error::MainError> {
 
     let k = track_assert_some!(NonZeroUsize::new(k), Failed);
     let m = track_assert_some!(NonZeroUsize::new(m), Failed);
-    let mut ec = track!(
-        ecpool::liberasurecode::LibErasureCoderBuilder::new(k, m)
-            .checksum(checksum)
-            .build_coder()
-    )?;
+    let mut ec = track!(ecpool::liberasurecode::LibErasureCoderBuilder::new(k, m)
+        .checksum(checksum)
+        .build_coder())?;
 
     let inputs2 = inputs.iter().map(|i| &i[..]).collect::<Vec<_>>();
     let start_time = Instant::now();
