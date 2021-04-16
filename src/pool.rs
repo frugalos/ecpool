@@ -1,5 +1,5 @@
 use futures::task::{Context, Poll};
-use futures::Future;
+use futures::{Future, FutureExt};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -101,7 +101,7 @@ struct LazyResult<T>(AsyncCall<Result<T>>);
 impl<T> Future for LazyResult<T> {
     type Output = Result<T>;
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        Pin::new(&mut self.0).poll(cx).map(|result| match result {
+        self.0.poll_unpin(cx).map(|result| match result {
             Ok(result) => track!(result),
             Err(e) => track!(Err(ErrorKind::Other.cause(e).into())),
         })
@@ -141,7 +141,10 @@ mod tests {
         );
         assert_eq!(
             Err(ErrorKind::InvalidInput),
-            coder.decode(encoded[3..].to_vec()).await.map_err(|e| *e.kind())
+            coder
+                .decode(encoded[3..].to_vec())
+                .await
+                .map_err(|e| *e.kind())
         );
 
         Ok(())
