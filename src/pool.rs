@@ -1,8 +1,8 @@
-use futures::task::{Context, Poll};
 use futures::{Future, FutureExt};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::pin::Pin;
+use std::task::{Context, Poll};
 use tokio_tasque::{AsyncCall, DefaultCpuTaskQueue, TaskQueueExt};
 use trackable::error::ErrorKindExt;
 
