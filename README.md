@@ -40,6 +40,7 @@ Basic usage:
 ```rust
 use ecpool::replica::ReplicaCoder;
 use ecpool::{ErrorKind, ErasureCoderPool};
+use futures::executor::block_on;
 use std::num::NonZeroUsize;
 use std::result::Result;
 use trackable::error::{Failure, Failed};
@@ -51,30 +52,30 @@ let coder = ErasureCoderPool::new(ReplicaCoder::new(data_fragments, parity_fragm
 
 // Encodes
 let data = vec![0, 1, 2, 3];
-let encoded = fibers_global::execute(coder.encode(data.clone()))?;
+let encoded = block_on(coder.encode(data.clone()))?;
 
 // Decodes
 assert_eq!(
     Some(&data),
-    fibers_global::execute(coder.decode(encoded[0..].to_vec()))
+    block_on(coder.decode(encoded[0..].to_vec()))
         .as_ref()
         .ok()
 );
 assert_eq!(
     Some(&data),
-    fibers_global::execute(coder.decode(encoded[1..].to_vec()))
+    block_on(coder.decode(encoded[1..].to_vec()))
         .as_ref()
         .ok()
 );
 assert_eq!(
     Some(&data),
-    fibers_global::execute(coder.decode(encoded[2..].to_vec()))
+    block_on(coder.decode(encoded[2..].to_vec()))
         .as_ref()
         .ok()
 );
 assert_eq!(
     Err(ErrorKind::InvalidInput),
-    fibers_global::execute(coder.decode(encoded[3..].to_vec())).map_err(|e| *e.kind())
+    block_on(coder.decode(encoded[3..].to_vec())).map_err(|e| *e.kind())
 );
 ```
 
